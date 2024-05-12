@@ -1,30 +1,22 @@
-#!make -f
+# id:212631071, mail:noamsayada1@gmail.com
+CXX = g++
+CXXFLAGS = -std=c++11 -g
+OBJECTS= Graph.o Algorithms.o
 
-CXX=clang
-CXXFLAGS=-std=c++11 -Werror -Wsign-conversion
-VALGRIND_FLAGS=-v --leak-check=full --show-leak-kinds=all  --error-exitcode=99
+run: test
+	./test
 
-SOURCES=Graph.cpp Algorithm.cpp TestCounter.cpp Test.cpp
-OBJECTS=$(subst .cpp,.o,$(SOURCES))
+test: Test.o $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-run: demo
-	./$^
+demo : Demo.o $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-demo: Demo.o $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o demo
+valgrind_tests: test
+	valgrind --leak-check=full ./$<
 
-test: TestCounter.o Test.o $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o test
-
-tidy:
-	clang-tidy $(SOURCES) -checks=bugprone-*,clang-analyzer-*,cppcoreguidelines-*,performance-*,portability-*,readability-*,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-owning-memory --warnings-as-errors=-* --
-
-valgrind: demo test
-	valgrind --tool=memcheck $(VALGRIND_FLAGS) ./demo 2>&1 | { egrep "lost| at " || true; }
-	valgrind --tool=memcheck $(VALGRIND_FLAGS) ./test 2>&1 | { egrep "lost| at " || true; }
-
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) --compile $< -o $@
+%.o : %.cpp
+	$(CXX) $(CXXFLAGS) -c $<
 
 clean:
-	rm -f *.o demo test
+	rm *.o test demo
